@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>German MS Prep Dashboard</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mu:#5d6773;--bd:#dfe3e8;--ac:#2f6fed;--ok:#1f9d55}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171b;--card:#1d2127;--tx:#e8ebee;--mu:#9aa4af;--bd:#2d333b;--ac:#6b9bff;--ok:#3ccf7a}}
+:root[data-theme="dark"]{--bg:#14171b;--card:#1d2127;--tx:#e8ebee;--mu:#9aa4af;--bd:#2d333b;--ac:#6b9bff;--ok:#3ccf7a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mu);font-size:13px;margin-bottom:12px}
+.bar{height:8px;background:var(--bd);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+.top{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+.tabs button,.ctl button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:16px;padding:5px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:13px;align-items:center}
+.month{margin-bottom:22px}.month h2{font-size:18px;margin:0}.ph{color:var(--mu);font-size:13px;margin:2px 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px}
+.card h3{font-size:15px;margin:0}.hrs{font-weight:400;color:var(--mu);font-size:12px}
+.d{color:var(--mu);font-size:13px;margin:2px 0 6px}
+label{display:flex;gap:8px;align-items:flex-start;padding:3px 0;cursor:pointer}
+label.done span{text-decoration:line-through;color:var(--mu)}
+input[type=checkbox]{margin-top:4px;accent-color:var(--ok)}
+.res{font-size:12.5px;margin:6px 0 4px;display:flex;flex-wrap:wrap;gap:4px 12px}
+a{color:var(--ac)}.ms{border-left:3px solid var(--ac);padding-left:10px;margin-top:6px}
+.rh{font-size:13px;color:var(--mu)}
+</style></head><body><main>
+<h1>German MS Prep Dashboard</h1>
+<div class="sub">Oct 2026 – Sep 2027 · ~35 h/week · progress saves in this browser</div>
+<div class="top"><div id="ov" style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"></div><div class="bar"><i id="ovb"></i></div>
+<div class="rh" style="margin-top:8px"><b>Weekly rhythm:</b> lectures/reading ~8 h · problem solving &amp; proofs ~20 h · review, error log, teach-back ~4 h · timed set/mock ~3 h (every 2–3 weeks). Lectures are ~30% of the work; solve closed-book and write full proofs. Budget ~5 h/week for applications from Month 5 (check deadlines: many close Apr–Jul 2027).</div></div>
+<div class="tabs" id="tabs"></div>
+<div class="ctl"><label style="padding:0"><input type="checkbox" id="hide"> Hide completed</label><button id="rst">Reset all</button><button id="thm">Toggle theme</button></div>
+<div id="out"></div>
+</main>
+<script>
+const R={
+d6042:["MIT 6.042J","https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-spring-2015/"],
+mcs:["Mathematics for CS (free text)","https://courses.csail.mit.edu/6.042/spring18/mcs.pdf"],
+nptel:["NPTEL course catalog (search the named course)","https://nptel.ac.in/courses"],
+a6006:["MIT 6.006","https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/"],
+a6046:["MIT 6.046","https://ocw.mit.edu/courses/6-046j-design-and-analysis-of-algorithms-spring-2015/"],
+s110:["Harvard Stat 110","https://projects.iq.harvard.edu/stat110"],
+la:["MIT 18.06 (Strang)","https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/"],
+toc:["MIT 18.404 Theory of Computation","https://ocw.mit.edu/courses/18-404j-theory-of-computation-fall-2020/"],
+cs144:["Stanford CS144","https://cs144.github.io/"],
+kr:["Kurose &amp; Ross resources","https://gaia.cs.umass.edu/kurose_ross/"],
+bs:["Boneh–Shoup book (free)","https://toc.cryptobook.us/"],
+cp:["Cryptopals challenges","https://cryptopals.com/"],
+ostep:["OSTEP (free)","https://pages.cs.wisc.edu/~remzi/OSTEP/"],
+xv6:["MIT xv6 / 6.828","https://pdos.csail.mit.edu/6.828/"],
+ds:["MIT 6.824","https://pdos.csail.mit.edu/6.824/"],
+raft:["Raft site","https://raft.github.io/"],
+vs:["van Steen &amp; Tanenbaum (free)","https://www.distributed-systems.net/index.php/books/ds4/"],
+cs155:["Stanford CS155","https://cs155.stanford.edu/"],
+ra:["Anderson, Security Engineering (free)","https://www.cl.cam.ac.uk/~rja14/book.html"]};
+const S=(n,h,d,it,r)=>({n,h,d,it,r});
+const M=[
+["Oct 2026","Phase 1 · Proof &amp; math foundations",[
+S("Diagnostic",2,"90-min closed-book test (logic/induction, algorithm analysis, probability, linear algebra). Sets what you can skip.",["Take diagnostic","Review results, set compression plan"],[]),
+S("Discrete Math",16,"Proof-writing boot camp. Watch lightly, then solve and write full proofs.",["Logic: propositional &amp; predicate, proof techniques","Direct, contradiction, contrapositive proofs","Induction (weak, strong, structural)","Sets, relations, functions","Counting: permutations, combinations, pigeonhole","IIITB weeks 1–6 done + 6.042 problem sets"],["nptel","d6042","mcs"]),
+S("Algorithms &amp; DS",13,"Analysis foundations and divide &amp; conquer.",["Asymptotics, recurrences, Master theorem, loop invariants","Sorting: merge, quick, heap; Ω(n log n) lower bound; linear-time sorting","Divide &amp; conquer: selection, closest pair, Karatsuba","Heaps / priority queues","Proof: merge sort correctness by induction"],["a6006","nptel"])],
+"Write induction and contradiction proofs cleanly, closed-book."],
+["Nov 2026","Phase 1 · Proof &amp; math foundations",[
+S("Discrete Math",12,"Recurrences, infinity and graphs.",["Recurrence solving, generating functions","Cardinality, countable/uncountable, Cantor diagonalization","Graph theory: Euler, bipartite, matching, Hall's theorem","Graph isomorphism, connectivity, coloring (IIITB weeks 7–10)"],["nptel","d6042","mcs"]),
+S("Algorithms &amp; DS",12,"Data structures and graph algorithms.",["Hashing, universal hashing, chaining analysis","BSTs, AVL/red-black trees, height bound","Union-find, path compression, amortized analysis","BFS/DFS, topological sort, SCC","Shortest paths: Dijkstra (with proof), Bellman-Ford"],["a6006"]),
+S("Probability",11,"Formal probability (Saxena weeks 1–4).",["Finite probability spaces, sigma algebra","Conditional probability, Bayes, independence","Expectation, linearity, variance","Standard distributions; Stat 110 problem sets"],["nptel","s110"])],
+"First timed mixed set (counting, graphs, probability)."],
+["Dec 2026","Phase 1 · Proof &amp; math foundations",[
+S("Number theory &amp; algebra",12,"The math cryptography assumes. Do this before Month 7.",["Divisibility, extended Euclid, modular arithmetic","Euler's theorem, totient, Fermat, CRT","Quadratic residues, primitive roots, discrete log","Groups, subgroups, cyclic groups, Lagrange","Rings and fields; RSA correctness proof"],["nptel","bs","mcs"]),
+S("Algorithms &amp; DS",12,"Design paradigms and hardness.",["Dynamic programming: formulate, prove, analyze","Greedy &amp; exchange arguments; MST (Kruskal, Prim, cut property)","Max-flow/min-cut, bipartite matching","Amortized analysis: aggregate &amp; potential","Intro NP-hardness, one reduction"],["a6046"]),
+S("Probability",11,"Concentration and randomized methods (Saxena weeks 5–8).",["Markov, Chebyshev, Chernoff bounds","Markov chains, stationary distributions","Probabilistic method examples","Streaming algorithms"],["nptel","s110"])],
+"Prove Chernoff bounds and RSA correctness from scratch."],
+["Jan 2027","Phase 2 · Theory &amp; networks",[
+S("Linear Algebra",10,"Part 1 of Strang.",["Linear systems, elimination, LU","Vector spaces, independence, basis, dimension","Four fundamental subspaces","Orthogonality, projections, Gram-Schmidt"],["la"]),
+S("Theory of Computation",11,"Finite automata and grammars; Sipser exercises.",["DFA, NFA, equivalence","Regular expressions, closure properties","Pumping lemma (regular)","Context-free grammars, PDA"],["toc","nptel"]),
+S("Computer Networks",9,"Top of the stack.",["Application layer: HTTP, DNS","Transport: UDP, reliable transfer","TCP: connection, flow control","Wireshark/socket mini-project"],["cs144","kr"]),
+S("Algorithms maintenance",3,"Keep DSA alive: 2–3 h/week.",["Weekly algorithm problem set (4 weeks)"],["a6046"])],
+""],
+["Feb 2027","Phase 2 · Theory &amp; networks",[
+S("Linear Algebra",10,"Part 2 of Strang.",["Determinants","Eigenvalues, eigenvectors, diagonalization","Symmetric matrices, positive definite","SVD"],["la"]),
+S("Theory of Computation",11,"Computability.",["Turing machines and variants","Decidable / recognizable languages","Halting problem, diagonalization","Reductions, Rice's theorem"],["toc","nptel"]),
+S("Computer Networks",9,"Network and link layers.",["IP, addressing, NAT","Routing: link-state, distance-vector, BGP","Link layer, switching, ARP"],["cs144","kr"]),
+S("Algorithms maintenance",3,"2–3 h/week.",["Weekly algorithm problem set (4 weeks)"],["a6046"])],
+""],
+["Mar 2027","Phase 2 · Theory &amp; networks",[
+S("Theory of Computation",11,"Complexity.",["Time complexity, P and NP","NP-completeness: Cook–Levin, SAT, 3-SAT","Reductions: clique, vertex cover, Hamiltonian path","Space complexity (intro)"],["toc","nptel"]),
+S("Computer Networks",9,"Congestion and security basics.",["Congestion control (AIMD, TCP variants)","Network security basics: TLS, firewalls","CS144 problem sets"],["cs144","kr"]),
+S("Linear Algebra",8,"Wrap-up.",["Problem sets across both parts","Teach-back: SVD and eigen-decomposition"],["la"]),
+S("Algorithms maintenance",3,"2–3 h/week.",["Weekly algorithm problem set (4 weeks)"],["a6046"])],
+"Mid-point mock exam (~3 h) across Phases 1–2, plus error-log review."],
+["Apr 2027","Phase 3 · Systems &amp; security core",[
+S("Cryptography",12,"Symmetric foundations (Choudhury + Boneh–Shoup).",["Perfect secrecy, one-time pad","PRGs, stream ciphers, security definitions","Block ciphers, PRPs, modes of operation","MACs, hash functions, collision resistance"],["nptel","bs","cp"]),
+S("Operating Systems",10,"Processes and memory.",["Processes, threads, scheduling","Virtual memory, paging, TLB","Address translation exercises"],["ostep","nptel"]),
+S("Distributed Systems",9,"Time and ordering.",["System models, failures","Physical vs logical clocks, Lamport, vector clocks","Global snapshots, 6.824 lecture start"],["ds","vs"]),
+S("Algorithms maintenance",2,"1–2 h/week.",["Weekly algorithm problem set (4 weeks)"],["a6046"])],
+""],
+["May 2027","Phase 3 · Systems &amp; security core",[
+S("Cryptography",12,"Public-key.",["Public-key encryption, trapdoor functions","RSA, Diffie–Hellman, ElGamal","Digital signatures","Security reductions"],["nptel","bs"]),
+S("Operating Systems",10,"Concurrency and storage.",["Locks, semaphores, condition variables","Deadlock","File systems, journaling","xv6 labs"],["ostep","xv6"]),
+S("Distributed Systems",9,"Replication.",["Replication, primary-backup","Consistency models (linearizability, eventual)","MapReduce/GFS case studies","6.824 labs 1–2"],["ds","vs"]),
+S("Algorithms maintenance",2,"1–2 h/week.",["Weekly algorithm problem set (4 weeks)"],["a6046"])],
+""],
+["Jun 2027","Phase 3 · Systems &amp; security core",[
+S("Cryptography",11,"Advanced topics.",["CCA security, authenticated encryption","Key exchange protocols","Intro to zero-knowledge","Crypto exam-style set"],["nptel","bs"]),
+S("Operating Systems",8,"Wrap-up.",["Revision of scheduling, memory, concurrency, FS","OS mock exam"],["ostep"]),
+S("Distributed Systems",11,"Consensus.",["Paxos","Raft (leader election, log replication)","Fault tolerance, Byzantine intro","Raft lab passing tests"],["ds","raft","vs"]),
+S("Algorithms maintenance",2,"1–2 h/week.",["Weekly algorithm problem set (4 weeks)"],["a6046"])],
+"Raft implementation passing tests and a crypto exam-style set done."],
+["Jul 2027","Phase 4 · Refresh &amp; exam readiness",[
+S("DBMS theory",8,"Theory only; you know the practice.",["Relational algebra, SQL semantics","Normalization (BCNF, 3NF)","Transactions, ACID, serializability","Indexing, query optimization"],["nptel"]),
+S("Computer Security",12,"Threat models and systems security.",["Threat modeling, access control","Memory safety, software vulnerabilities","Web security: XSS, CSRF, injection","CS155 problem sets"],["cs155","ra"]),
+S("Architecture refresh",5,"Light touch.",["Pipelining, caches, memory hierarchy"],["nptel"]),
+S("Mixed revision",6,"Rotate earlier topics.",["One timed mixed set per fortnight"],[])],
+""],
+["Aug 2027","Phase 4 · Refresh &amp; exam readiness",[
+S("ML theory",11,"AI secondary track.",["Bias–variance, regularization","Probabilistic models, MLE","Gradient descent, convexity","Calculus/optimization basics"],["nptel"]),
+S("Statistics",8,"Wasserman, All of Statistics.",["Estimation, confidence intervals","Hypothesis testing","MLE and Bayesian basics"],["s110"]),
+S("Security protocols",8,"Finish security.",["CS155 remainder","TLS, protocol analysis"],["cs155","ra"]),
+S("Mixed revision",6,"",["One timed mixed set per fortnight"],[])],
+""],
+["Sep 2027","Phase 4 · Refresh &amp; exam readiness",[
+S("Mock exams",12,"Weekly full-length closed-book exams, 90–120 min.",["Mock 1","Mock 2","Mock 3","Mock 4"],[]),
+S("Past papers",10,"ETH Zurich and any German university exams you can find (search course pages).",["Algorithms/Discrete past exams","Crypto/Security/Distributed past exams"],[]),
+S("Weak-topic repair",13,"Driven entirely by the error log.",["Review full error log","Redo every missed problem","Teach-back of top 5 weak topics"],[])],
+"Consistently solid on unseen problems under time pressure."]
+];
+const K="msprep-v1";let st={};try{st=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(st))}catch(e){}};
+let cur="all";
+const ids=m=>{const a=[];M[m][2].forEach((s,i)=>s.it.forEach((_,j)=>a.push(`${m}-${i}-${j}`)));if(M[m][3])a.push(`${m}-ms`);return a};
+const pct=a=>a.length?Math.round(a.filter(x=>st[x]).length/a.length*100):0;
+function render(){
+const hide=document.getElementById("hide").checked;
+const all=M.flatMap((_,m)=>ids(m));const p=pct(all);
+document.getElementById("ov").innerHTML=`<b>Overall progress</b><span>${all.filter(x=>st[x]).length}/${all.length} · ${p}%</span>`;
+document.getElementById("ovb").style.width=p+"%";
+document.getElementById("tabs").innerHTML=`<button class="${cur=="all"?"on":""}" data-m="all">All</button>`+M.map((x,m)=>`<button class="${cur==m?"on":""}" data-m="${m}">M${m+1} · ${pct(ids(m))}%</button>`).join("");
+let h="";
+M.forEach((mo,m)=>{if(cur!="all"&&cur!=m)return;
+h+=`<div class="month"><h2>Month ${m+1} — ${mo[0]}</h2><div class="ph">${mo[1]} · ${pct(ids(m))}% done</div><div class="bar" style="margin-bottom:10px"><i style="width:${pct(ids(m))}%"></i></div>`;
+mo[2].forEach((s,i)=>{
+const items=s.it.map((t,j)=>{const id=`${m}-${i}-${j}`;if(hide&&st[id])return"";return`<label class="${st[id]?"done":""}"><input type="checkbox" data-id="${id}" ${st[id]?"checked":""}><span>${t}</span></label>`}).join("");
+const links=s.r.map(k=>`<a href="${R[k][1]}" target="_blank" rel="noopener">${R[k][0]}</a>`).join("");
+h+=`<div class="card"><h3>${s.n} <span class="hrs">· ~${s.h} h/week</span></h3>${s.d?`<div class="d">${s.d}</div>`:""}${items}${links?`<div class="res">${links}</div>`:""}</div>`});
+if(mo[3]){const id=`${m}-ms`;if(!(hide&&st[id]))h+=`<div class="card ms"><label class="${st[id]?"done":""}"><input type="checkbox" data-id="${id}" ${st[id]?"checked":""}><span><b>Milestone:</b> ${mo[3]}</span></label></div>`}
+h+="</div>"});
+document.getElementById("out").innerHTML=h}
+document.addEventListener("change",e=>{if(e.target.dataset.id){st[e.target.dataset.id]=e.target.checked;save();render()}else if(e.target.id=="hide")render()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-m]");if(b){cur=b.dataset.m=="all"?"all":+b.dataset.m;render()}
+if(e.target.id=="rst"&&confirm("Clear all progress?")){st={};save();render()}
+if(e.target.id=="thm"){const r=document.documentElement;const d=r.dataset.theme?r.dataset.theme=="dark":matchMedia("(prefers-color-scheme:dark)").matches;r.dataset.theme=d?"light":"dark"}});
+render();
+</script></body></html>
